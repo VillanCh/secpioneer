@@ -504,6 +504,7 @@ pre code {
 .yolo-mode-container .ant-btn-primary {
   background-color: #ff4d4f !important;
   border-color: #ff4d4f !important;
+  color: #ffffff !important;
 }
 
 .yolo-mode-container .input-area-yolo {
@@ -517,27 +518,51 @@ pre code {
 }
 
 .yolo-warning {
-  background-color: #ff4d4f;
+  background-color: #ff2121;
   color: white;
-  padding: 8px 16px;
-  font-weight: bold;
+  padding: 10px 16px;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  animation: pulseDanger 2s infinite;
+  animation: warningPulse 1.5s infinite;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  border: 2px dashed #fff;
+  box-shadow: 0 0 0 2px #ff2121, 0 0 10px rgba(255, 0, 0, 0.5);
+  position: relative;
+  z-index: 10;
 }
 
-@keyframes pulseDanger {
+@keyframes warningPulse {
   0% {
-    background-color: #ff4d4f;
+    background-color: #ff2121;
+    transform: scale(1);
   }
   50% {
-    background-color: #ff7875;
+    background-color: #ff4d4f;
+    transform: scale(1.02);
   }
   100% {
-    background-color: #ff4d4f;
+    background-color: #ff2121;
+    transform: scale(1);
   }
+}
+
+.yolo-warning::before {
+  content: "⚠️";
+  font-size: 18px;
+  margin-right: 6px;
+  animation: shake 1s infinite;
+  display: inline-block;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px) rotate(-2deg); }
+  75% { transform: translateX(2px) rotate(2deg); }
 }
 
 /* 在YOLO模式下修改消息气泡样式 */
@@ -706,26 +731,30 @@ body.yolo-mode {
   background-color: #ff7875 !important;
 }
 
+/* 修改 YOLO 模式下文字颜色 */
 .yolo-mode .ant-typography,
 .yolo-mode-container .ant-typography {
-  color: #cf1322 !important;
+  color: #8c0000 !important; /* 更深的红色，增加对比度 */
 }
 
 .yolo-mode .ant-btn-primary,
 .yolo-mode-container .ant-btn-primary {
   background-color: #ff4d4f !important;
   border-color: #ff4d4f !important;
+  color: #ffffff !important; /* 白色文字 */
 }
 
 .yolo-mode .ant-tag,
 .yolo-mode-container .ant-tag {
   background-color: #fff2f0 !important;
   border-color: #ff7875 !important;
+  color: #8c0000 !important; /* 更深的红色文字 */
 }
 
 .yolo-mode .ant-input,
 .yolo-mode-container .ant-input {
   border-color: #ff7875 !important;
+  color: #8c0000 !important; /* 更深的红色文字 */
 }
 
 .yolo-mode .ant-input:focus,
@@ -736,6 +765,7 @@ body.yolo-mode {
 .yolo-mode .ant-avatar,
 .yolo-mode-container .ant-avatar {
   background-color: #ff4d4f !important;
+  color: #ffffff !important; /* 白色文字 */
 }
 
 .yolo-mode .welcome-panel-visible,
@@ -860,9 +890,377 @@ body.yolo-mode {
 .yolo-mode-container .message-item-user {
   background-color: #ffe7e7;
   border-color: #ffa39e;
+  color: #8c0000 !important; /* 更深的红色文字 */
 }
 
 .yolo-mode-container .message-item-assistant {
   background-color: #fff2f0;
   border-color: #ffccc7;
+  color: #8c0000 !important; /* 更深的红色文字 */
+}
+
+/* 左侧标签页样式 */
+.left-panel-tabs {
+  height: 100%;
+  display: flex;
+  margin-right: 1px;
+}
+
+.left-panel-tabs .ant-tabs-content-holder {
+  height: 100%;
+  overflow: hidden;
+  flex: 1;
+  padding-left: 0;
+  margin-left: -1px;
+  border-left: 1px solid #eaeaea;
+  box-shadow: -1px 0 3px rgba(0, 0, 0, 0.02);
+}
+
+/* 添加高特异性选择器覆盖Ant Design默认样式 */
+.left-panel-tabs.ant-tabs-left > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane,
+:where(.css-dev-only-do-not-override-1ehpwt4).ant-tabs-left > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+  padding-left: 0 !important;
+}
+
+.left-panel-tabs .ant-tabs-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* 修复隐藏非激活标签页内容 */
+.left-panel-tabs .ant-tabs-tabpane {
+  height: 100%;
+  padding-right: 3px;
+  padding-left: 3px;
+  background-color: #fdfdfd;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+/* 显示激活的标签页内容 */
+.left-panel-tabs .ant-tabs-tabpane-active {
+  visibility: visible !important;
+  z-index: 2 !important;
+  opacity: 1 !important;
+}
+
+/* 左侧标签页标签样式 */
+.left-panel-tabs .ant-tabs-nav {
+  width: 58px;
+  background: #f5f7f9;
+  border-right: none;
+  box-shadow: none;
+  padding: 12px 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.left-panel-tabs .ant-tabs-nav-list {
+  width: 100%;
+}
+
+.left-panel-tabs .ant-tabs-tab {
+  padding: 6px 0 !important;
+  margin: 6px 0 !important;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s;
+  height: 56px;
+  width: 100%;
+  border-radius: 0;
+  position: relative;
+  text-align: center;
+}
+
+.left-panel-tabs .ant-tabs-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: transparent;
+  transition: all 0.3s;
+}
+
+.left-panel-tabs .ant-tabs-tab-active {
+  background-color: rgba(0, 100, 0, 0.08);
+}
+
+.left-panel-tabs .ant-tabs-tab-active::after {
+  background-color: #006400;
+}
+
+.left-panel-tabs .ant-tabs-tab:hover {
+  background-color: rgba(0, 100, 0, 0.05);
+}
+
+.left-panel-tabs .ant-tabs-tab:hover::after {
+  background-color: #006400;
+  opacity: 0.5;
+}
+
+.left-panel-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin-top: 8px !important;
+}
+
+.left-panel-tabs .ant-tabs-tab-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* 标签内容样式 */
+.tab-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 6px;
+  text-align: center;
+  padding: 0;
+  box-sizing: border-box;
+  min-height: 45px;
+}
+
+.tab-icon {
+  font-size: 18px;
+  color: #666;
+  transition: all 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.tab-text {
+  font-size: 12px;
+  color: #666;
+  transition: all 0.3s;
+  text-align: center;
+  line-height: 1.2;
+  width: 100%;
+  display: block;
+  margin: 0 auto;
+}
+
+.left-panel-tabs .ant-tabs-tab-active .tab-icon,
+.left-panel-tabs .ant-tabs-tab-active .tab-text {
+  color: #006400;
+  font-weight: 500;
+}
+
+.left-panel-tabs .ant-tabs-tab:hover .tab-icon,
+.left-panel-tabs .ant-tabs-tab:hover .tab-text {
+  color: #006400;
+}
+
+/* 隐藏标签页墨条 */
+.left-panel-tabs .ant-tabs-ink-bar {
+  display: none !important;
+}
+
+/* YOLO模式下的标签页样式 */
+.yolo-mode .left-panel-tabs .ant-tabs-nav {
+  background-color: #ff2d2d !important; /* 更深的红色背景 */
+  border-right-color: #ffccc7;
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab-active {
+  background-color: rgba(155, 0, 0, 0.2) !important; /* 更深的红色背景 */
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab-active::after {
+  background-color: #ffffff !important; /* 白色指示条 */
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab:hover {
+  background-color: rgba(155, 0, 0, 0.3) !important; /* 更深的红色背景 */
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab:hover::after {
+  background-color: #ffffff !important; /* 白色指示条 */
+  opacity: 0.8;
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab-active .tab-icon,
+.yolo-mode .left-panel-tabs .ant-tabs-tab-active .tab-text {
+  color: #ffffff !important; /* 白色文字 */
+  font-weight: 700 !important; /* 加粗文字 */
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.2); /* 添加轻微文字阴影提高可读性 */
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab .tab-icon,
+.yolo-mode .left-panel-tabs .ant-tabs-tab .tab-text {
+  color: #ffe0e0 !important; /* 浅色文字 */
+  font-weight: 600 !important; /* 加粗文字 */
+}
+
+.yolo-mode .left-panel-tabs .ant-tabs-tab:hover .tab-icon,
+.yolo-mode .left-panel-tabs .ant-tabs-tab:hover .tab-text {
+  color: #ffffff !important; /* 白色文字 */
+  font-weight: 700 !important; /* 加粗文字 */
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.2); /* 添加轻微文字阴影提高可读性 */
+}
+
+/* 添加 YOLO 模式下更多高对比度样式 */
+.yolo-mode .ant-list-item,
+.yolo-mode-container .ant-list-item {
+  color: #8c0000 !important; /* 更深的红色文字 */
+}
+
+.yolo-mode .ant-x-thought-chain-item,
+.yolo-mode-container .ant-x-thought-chain-item {
+  background-color: #ffe7e7 !important;
+  border-color: #ffa39e !important;
+  color: #8c0000 !important; /* 更深的红色文字 */
+}
+
+.yolo-mode .message-timestamp,
+.yolo-mode-container .message-timestamp {
+  color: #8c0000 !important; /* 更深的红色文字 */
+  opacity: 0.7;
+}
+
+/* YOLO 模式下的消息操作按钮 */
+.yolo-mode .message-action-button,
+.yolo-mode-container .message-action-button {
+  color: #8c0000 !important; /* 更深的红色文字 */
+}
+
+.yolo-mode .message-action-button:hover,
+.yolo-mode-container .message-action-button:hover {
+  color: #ffffff !important; /* 白色文字 */
+  background-color: #ff4d4f !important; /* 红色背景 */
+}
+
+/* YOLO 模式下内容区的标题 */
+.yolo-mode .mcp-server-title,
+.yolo-mode .task-file-title,
+.yolo-mode-container .mcp-server-title,
+.yolo-mode-container .task-file-title {
+  color: #8c0000 !important; /* 更深的红色文字 */
+  border-bottom-color: #ffa39e !important;
+}
+
+/* YOLO 模式下内容区的背景 */
+.yolo-mode .ant-tabs-tabpane,
+.yolo-mode-container .ant-tabs-tabpane {
+  background-color: #fff5f5 !important;
+}
+
+/* 主要按钮的悬停效果 */
+.yolo-mode .ant-btn-primary:hover,
+.yolo-mode-container .ant-btn-primary:hover {
+  background-color: #ff2d2d !important; /* 更深的红色 */
+  border-color: #ff2d2d !important;
+  box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.2) !important;
+}
+
+/* 思维面板内容样式优化 */
+.thought-panel {
+  padding: 8px 8px 8px 6px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.thought-panel .ant-typography {
+  margin-bottom: 12px !important;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+/* 左侧标签页标签激活样式优化 */
+.left-panel-tabs .ant-tabs-tab-active {
+  background-color: rgba(0, 100, 0, 0.06);
+}
+
+.left-panel-tabs .ant-tabs-tab-active::after {
+  background-color: #006400;
+  width: 2px;
+}
+
+.left-panel-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin-top: 6px !important;
+}
+
+.tab-icon {
+  font-size: 18px;
+  color: #666;
+  transition: all 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 20px;
+  margin: 0 auto;
+}
+
+/* MCPServerConfig 样式优化 */
+.mcp-server-config {
+  padding: 8px 8px 8px 6px;
+  height: 100%;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* TaskFileSystem 样式优化 */
+.task-file-system {
+  padding: 8px 8px 8px 6px;
+  height: 100%;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.mcp-server-title {
+  margin-bottom: 16px !important;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.task-file-title {
+  margin-bottom: 16px !important;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+/* ThoughtChain样式优化 */
+.ant-x-thought-chain-item {
+  border-radius: 6px !important;
+  margin-bottom: 10px !important;
+  padding: 10px !important;
+}
+
+/* 列表项样式优化 */
+.ant-list-item {
+  padding: 8px 4px !important;
 }

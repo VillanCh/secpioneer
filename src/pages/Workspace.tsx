@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import ThoughtPanel from '../components/ThoughtPanel';
 import ChatPanel from '../components/ChatPanel';
 import ResizableSplitter from '../components/ResizableSplitter';
+import LeftPanelTabs, { TabKey, STORAGE_KEY as TAB_STORAGE_KEY } from '../components/LeftPanelTabs';
 
 // 本地存储的键名
 const STORAGE_KEY = {
   LEFT_PANEL_WIDTH: 'secpioneer_left_panel_width',
-  LEFT_PANEL_COLLAPSED: 'secpioneer_left_panel_collapsed'
+  LEFT_PANEL_COLLAPSED: 'secpioneer_left_panel_collapsed',
 };
 
 // 从 localStorage 读取值，如果不存在则返回默认值
@@ -46,7 +46,7 @@ interface Message {
 
 const Workspace: React.FC = () => {
   // 初始状态从 localStorage 读取，如果不存在则使用默认值
-  const defaultWidth = window.innerWidth * 0.3;
+  const defaultWidth = window.innerWidth * 0.25;
   const [thoughts, setThoughts] = useState<Thought[]>([
     { id: '1', title: '想法 1', content: '这是第一个想法的内容' },
     { id: '2', title: '想法 2', content: '这是第二个想法的内容' },
@@ -55,6 +55,11 @@ const Workspace: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', content: '欢迎使用聊天系统', isUser: false },
   ]);
+  
+  // 当前活动的标签页
+  const [activeTab, setActiveTab] = useState<TabKey>(() => 
+    getStoredValue(TAB_STORAGE_KEY.ACTIVE_TAB, 'thoughts' as TabKey)
+  );
 
   // 使用 localStorage 中存储的值初始化状态
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => {
@@ -178,7 +183,7 @@ const Workspace: React.FC = () => {
 
     window.addEventListener('resize', handleWindowResize);
     return () => window.removeEventListener('resize', handleWindowResize);
-  }, [isLeftCollapsed]);
+  }, [isLeftCollapsed, leftPanelWidth]);
 
   const handleSendMessage = (value: string) => {
     if (value.trim()) {
@@ -227,6 +232,12 @@ const Workspace: React.FC = () => {
     }, 300); // 与 CSS 过渡时间保持一致
   }, [isLeftCollapsed, leftPanelWidth, prevLeftWidth]);
 
+  // 处理标签页切换
+  const handleTabChange = (key: TabKey) => {
+    setActiveTab(key);
+    storeValue(TAB_STORAGE_KEY.ACTIVE_TAB, key);
+  };
+
   // 组件初始化时，根据保存的状态设置面板
   useEffect(() => {
     // 如果折叠状态初始化为 true，则确保宽度为 0
@@ -247,8 +258,9 @@ const Workspace: React.FC = () => {
       if (!isLeftCollapsed) {
         storeValue('secpioneer_left_panel_expanded_width', leftPanelWidth);
       }
+      storeValue(TAB_STORAGE_KEY.ACTIVE_TAB, activeTab);
     };
-  }, []);
+  }, [isLeftCollapsed, leftPanelWidth, activeTab]);
 
   return (
     <div className="workspace-container" style={{ 
@@ -263,7 +275,7 @@ const Workspace: React.FC = () => {
         flex: 1,
         overflow: 'hidden',
       }}>
-        {/* 左侧思维面板 */}
+        {/* 左侧面板 */}
         <div 
           className="left-panel"
           style={{ 
@@ -276,9 +288,11 @@ const Workspace: React.FC = () => {
             display: leftPanelWidth === 0 ? 'none' : 'block',
           }}
         >
-          <ThoughtPanel 
-            thoughts={thoughts} 
-            onThoughtClick={handleThoughtClick} 
+          <LeftPanelTabs 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            thoughts={thoughts}
+            onThoughtClick={handleThoughtClick}
           />
         </div>
 
@@ -288,9 +302,9 @@ const Workspace: React.FC = () => {
           onDragEnd={handleDragEnd}
           onToggleCollapse={handleToggleCollapse}
           isLeftCollapsed={isLeftCollapsed}
-          minWidth={80}
-          maxWidth={window.innerWidth * 0.7}
-          autoCollapseThreshold={60}
+          minWidth={52}
+          maxWidth={window.innerWidth * 0.6}
+          autoCollapseThreshold={40}
         />
         
         {/* 右侧聊天区域 */}

@@ -106,7 +106,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, onSendMessage }) => {
                 className={`yolo-checkbox ${yoloMode ? 'yolo-active' : ''}`}
               >
                 <Space>
-                  {yoloMode && <WarningOutlined style={{ color: '#ff4d4f' }} />}
                   <span style={{ color: yoloMode ? '#ff4d4f' : undefined, fontWeight: yoloMode ? 'bold' : 'normal' }}>
                     YOLO
                   </span>
@@ -139,7 +138,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, onSendMessage }) => {
       {/* YOLO模式警告 */}
       {yoloMode && (
         <div className="yolo-warning">
-          <WarningOutlined /> 危险模式已开启：命令将不经询问直接执行！
+          危险模式(YOLO)已开启：命令将不经询问直接执行！
         </div>
       )}
       

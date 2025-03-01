@@ -17,19 +17,12 @@ interface ThoughtPanelProps {
 
 const ThoughtPanel: React.FC<ThoughtPanelProps> = ({ thoughts, onThoughtClick }) => {
   return (
-    <div style={{ 
-      width: '100%', 
-      height: '100%', 
-      padding: '20px', 
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div className="thought-panel">
       <Title level={4} style={{ 
-        marginBottom: '24px', 
+        marginBottom: '20px', 
         color: '#333',
         borderBottom: '1px solid #f0f0f0',
-        paddingBottom: '12px',
+        paddingBottom: '10px',
         fontWeight: 500
       }}>
         思维链

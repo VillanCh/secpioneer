@@ -15,7 +15,7 @@ const ChatInputPanel: React.FC<ChatInputPanelProps> = ({ onSendMessage }) => {
     >
       <Sender 
         onSubmit={onSendMessage}
-        placeholder="请输入消息..." 
+        placeholder="下达命令，Yak Pioneer 将会自动执行" 
       />
     </Card>
   );
