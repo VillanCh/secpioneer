@@ -1,0 +1,868 @@
+.App {
+  text-align: center;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* 工作区样式 */
+.workspace-container {
+  animation: fadeIn 0.5s ease;
+  /* 使用硬件加速提高渲染性能 */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 防止分隔栏跳动 */
+.resizable-splitter {
+  position: relative;
+  z-index: 10;
+  /* 硬件加速，防止渲染抖动 */
+  will-change: transform;
+  transform: translateZ(0);
+  /* 确保分隔栏总是在可见区域 */
+  overflow: visible;
+  /* 防止用户选择文本 */
+  user-select: none;
+  /* 防止拖拽时光标变化 */
+  cursor: col-resize !important;
+  /* 使用固定定位避免 DOM 重排 */
+  contain: layout style;
+}
+
+/* 优化收起按钮样式 */
+.collapse-button {
+  /* 硬件加速 */
+  will-change: transform;
+  transform: translateZ(0);
+  /* 防止按钮被过渡动画波及 */
+  isolation: isolate;
+  /* 确保按钮总是独立绘制，防止与其他元素混合 */
+  contain: layout style paint;
+  /* 在拖拽过程中也要响应点击 */
+  pointer-events: auto !important;
+}
+
+/* 左侧面板优化 */
+.left-panel {
+  /* 硬件加速 */
+  will-change: width, transform;
+  transform: translateZ(0);
+  /* 防止布局抖动 */
+  contain: layout style;
+  /* 拖拽时禁用过渡效果 */
+  transition-property: width, max-width;
+}
+
+/* 拖拽过程中禁用过渡 */
+.dragging * {
+  transition: none !important;
+}
+
+/* 阻止文本选择，提高拖拽流畅度 */
+.workspace-container * {
+  user-select: none;
+}
+
+/* 高性能动画类 */
+.high-performance {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 自定义链接颜色 */
+a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #40a9ff;
+}
+
+/* 自定义卡片样式 */
+.ant-card {
+  border-radius: 8px;
+}
+
+/* 聊天气泡样式 */
+.ant-x-conversations-item-content {
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* 脉动动画用于自动折叠提示 */
+@keyframes pulse {
+  0% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 3px 8px rgba(255, 77, 79, 0.4);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+  }
+}
+
+/* 自动折叠区域视觉提示 */
+@keyframes warningFlash {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* 近自动折叠区域的分隔线突出显示 */
+.resizable-splitter.near-collapse {
+  box-shadow: 0 0 0 1px #ff4d4f, 0 0 8px rgba(255, 77, 79, 0.5);
+  animation: warningFlash 1s infinite;
+}
+
+/* 用户发送的消息气泡样式 */
+.ant-x-conversations-user {
+  position: relative;
+}
+
+.ant-x-conversations-user .ant-x-conversations-item-content {
+  background-color: #e6f7ff !important;
+  color: #333 !important;
+  border: 1px solid #91d5ff !important;
+}
+
+.ant-x-conversations-user .ant-x-conversations-item-content:hover {
+  background-color: #d9f2ff !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 助手发送的消息气泡样式 */
+.ant-x-conversations-assistant .ant-x-conversations-item-content {
+  background-color: #f5f5f5 !important;
+  color: #333 !important;
+  border: 1px solid #e8e8e8 !important;
+}
+
+.ant-x-conversations-assistant .ant-x-conversations-item-content:hover {
+  background-color: #f0f0f0 !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 用户标识样式 */
+.message-user-identifier {
+  text-align: right;
+  margin-bottom: 4px;
+  padding-right: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #1890ff;
+}
+
+/* 加强代码块显示 */
+pre code {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background-color: #f8f8f8;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  border: 1px solid #eee;
+}
+
+/* 思维链节点样式 */
+.ant-x-thought-chain-item {
+  border-radius: 8px !important;
+  margin-bottom: 12px !important;
+  overflow: hidden !important;
+}
+
+/* 输入框样式 */
+.ant-x-sender {
+  border-radius: 8px !important;
+}
+
+/* 按钮样式 */
+.ant-btn {
+  border-radius: 4px !important;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Monaco Editor 样式优化 */
+.monaco-editor {
+  border-radius: 4px;
+  overflow: hidden !important;
+}
+
+.monaco-editor .overflow-guard {
+  border-radius: 4px;
+}
+
+/* 编辑器容器样式 */
+.code-editor-container {
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  will-change: transform;
+  transform: translateZ(0);
+  position: relative;
+}
+
+/* 编辑器语言选择器样式 */
+.language-selector {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  background-color: #fff;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.language-selector:hover {
+  border-color: #40a9ff;
+}
+
+.language-selector:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* 输入模式切换按钮样式 */
+.input-mode-toggle .ant-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* 代码编辑器主题优化 */
+.monaco-editor .margin,
+.monaco-editor .monaco-editor-background {
+  background-color: #fafafa;
+}
+
+/* Monaco 编辑器焦点样式 */
+.monaco-editor.focused {
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Monaco Editor 响应式设计 */
+@media (max-width: 768px) {
+  .code-editor-container {
+    height: 150px !important;
+  }
+  
+  .monaco-editor {
+    max-height: 150px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .input-mode-toggle .ant-btn span:not(.anticon) {
+    display: none;
+  }
+  
+  .language-selector {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* 键盘快捷键提示 */
+.monaco-keybinding {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  padding: 2px 4px;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+  border: 1px solid #e8e8e8;
+  font-size: 12px;
+  color: #333;
+}
+
+/* 优化代码编辑器的高度调整 */
+.monaco-editor-container {
+  position: relative;
+}
+
+.monaco-editor-container .resize-handle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: transparent;
+  cursor: ns-resize;
+  z-index: 10;
+}
+
+.monaco-editor-container .resize-handle:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* 欢迎面板动画和样式 */
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    max-height: 300px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    max-height: 300px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.welcome-panel-visible {
+  animation: slideDown 0.3s ease forwards;
+  border-bottom: 1px solid #f0f0f0;
+  overflow: hidden;
+  max-height: 300px;
+}
+
+.welcome-panel-hidden {
+  animation: slideUp 0.3s ease forwards;
+  height: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.welcome-card {
+  transition: all 0.2s ease;
+  cursor: default;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 命令模式和代码模式卡片 */
+.mode-card {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.mode-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #1890ff, #52c41a);
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.mode-card:hover::after {
+  transform: translateY(0);
+}
+
+/* 消息列表容器样式 */
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+  gap: 12px;
+}
+
+/* 确保新的消息显示方式符合 Conversations 组件 */
+.ant-x-conversations {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 输入区域增强样式 */
+.input-area {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.input-area:focus-within {
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.06);
+}
+
+/* YOLO模式样式 */
+.yolo-mode-container * {
+  transition: all 0.3s ease;
+}
+
+.yolo-mode {
+  background-color: #fff1f0 !important;
+}
+
+.yolo-mode-container {
+  background-color: #fff1f0 !important;
+}
+
+.yolo-mode-container .ant-btn-primary {
+  background-color: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+}
+
+.yolo-mode-container .input-area-yolo {
+  background-color: #fff1f0 !important;
+  box-shadow: 0 -2px 10px rgba(255, 77, 79, 0.15) !important;
+  border-color: #ffccc7 !important;
+}
+
+.yolo-mode-container .input-area-yolo:focus-within {
+  box-shadow: 0 -2px 15px rgba(255, 77, 79, 0.25) !important;
+}
+
+.yolo-warning {
+  background-color: #ff4d4f;
+  color: white;
+  padding: 8px 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: pulseDanger 2s infinite;
+}
+
+@keyframes pulseDanger {
+  0% {
+    background-color: #ff4d4f;
+  }
+  50% {
+    background-color: #ff7875;
+  }
+  100% {
+    background-color: #ff4d4f;
+  }
+}
+
+/* 在YOLO模式下修改消息气泡样式 */
+.yolo-mode-container .ant-x-conversations-assistant .ant-x-conversations-item-content {
+  background-color: #fff2f0 !important;
+  border-color: #ffccc7 !important;
+}
+
+.yolo-mode-container .ant-x-conversations-user .ant-x-conversations-item-content {
+  background-color: #ffe7e7 !important;
+  border-color: #ffa39e !important;
+}
+
+.yolo-mode-container .ant-typography {
+  color: #cf1322;
+}
+
+.yolo-mode-container .message-action-button:hover {
+  color: #ff4d4f;
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* 消息气泡样式增强 */
+.ant-x-conversations-item {
+  transition: all 0.25s ease;
+  margin-bottom: 12px;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ant-x-conversations-item:hover {
+  transform: translateY(-2px);
+}
+
+/* 消息头部样式优化 */
+.message-user-header,
+.message-assistant-header {
+  display: flex;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.message-user-header {
+  justify-content: flex-end;
+}
+
+.message-assistant-header {
+  justify-content: flex-start;
+}
+
+/* 时间戳样式 */
+.message-timestamp {
+  font-size: 12px !important;
+  color: #8c8c8c;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.ant-x-conversations-item:hover .message-timestamp {
+  opacity: 1;
+}
+
+/* 头像悬停效果 */
+.ant-avatar {
+  transition: all 0.3s ease;
+}
+
+.ant-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 消息操作按钮样式 */
+.message-action-button {
+  font-size: 12px;
+  color: #8c8c8c;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: transparent;
+  transition: all 0.2s;
+}
+
+.message-action-button:hover {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+/* 消息底部样式 */
+.message-footer {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ant-x-conversations-assistant:hover .message-footer {
+  opacity: 1;
+}
+
+/* 空消息提示样式 */
+.empty-message-prompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  color: #8c8c8c;
+}
+
+/* 改进消息内容样式 */
+.ant-x-conversations-item-content {
+  position: relative;
+  overflow: visible !important;
+  transition: all 0.3s !important;
+}
+
+.ant-x-conversations-user .ant-x-conversations-item-content {
+  background-color: #e6f7ff !important;
+  color: #333 !important;
+  border: 1px solid #91d5ff !important;
+}
+
+.ant-x-conversations-user .ant-x-conversations-item-content:hover {
+  background-color: #d9f2ff !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15) !important;
+}
+
+.ant-x-conversations-assistant .ant-x-conversations-item-content {
+  background-color: #f5f5f5 !important;
+  color: #333 !important;
+  border: 1px solid #e8e8e8 !important;
+}
+
+.ant-x-conversations-assistant .ant-x-conversations-item-content:hover {
+  background-color: #f0f0f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 在YOLO模式下修改更多界面元素样式 */
+.yolo-mode .workspace-container,
+body.yolo-mode {
+  background-color: #fff1f0 !important;
+}
+
+.yolo-mode .left-panel {
+  background-color: #fff2f0 !important;
+  border-color: #ffccc7 !important;
+}
+
+.yolo-mode .resizable-splitter {
+  background-color: #ff7875 !important;
+}
+
+.yolo-mode .ant-typography,
+.yolo-mode-container .ant-typography {
+  color: #cf1322 !important;
+}
+
+.yolo-mode .ant-btn-primary,
+.yolo-mode-container .ant-btn-primary {
+  background-color: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+}
+
+.yolo-mode .ant-tag,
+.yolo-mode-container .ant-tag {
+  background-color: #fff2f0 !important;
+  border-color: #ff7875 !important;
+}
+
+.yolo-mode .ant-input,
+.yolo-mode-container .ant-input {
+  border-color: #ff7875 !important;
+}
+
+.yolo-mode .ant-input:focus,
+.yolo-mode-container .ant-input:focus {
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2) !important;
+}
+
+.yolo-mode .ant-avatar,
+.yolo-mode-container .ant-avatar {
+  background-color: #ff4d4f !important;
+}
+
+.yolo-mode .welcome-panel-visible,
+.yolo-mode-container .welcome-panel-visible {
+  background-color: #fff2f0 !important;
+  border-color: #ffccc7 !important;
+}
+
+.yolo-mode .welcome-card,
+.yolo-mode-container .welcome-card {
+  background-color: #fff7f6 !important;
+  border-color: #ffccc7 !important;
+}
+
+.yolo-mode-container .mode-card::after {
+  background: linear-gradient(90deg, #ff4d4f, #ff7875) !important;
+}
+
+/* YOLO复选框样式 */
+.yolo-checkbox {
+  margin-left: 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  padding: 0 2px;
+}
+
+.yolo-checkbox.yolo-active .ant-checkbox-inner {
+  background-color: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+}
+
+.yolo-checkbox:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+.yolo-checkbox.yolo-active:hover {
+  background-color: rgba(255, 77, 79, 0.05);
+}
+
+/* 控制按钮样式优化 */
+.control-button {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+/* 在YOLO模式下修改更多界面元素样式 */
+.yolo-mode .workspace-container,
+body.yolo-mode {
+  background-color: #fff1f0 !important;
+}
+
+/* 消息提示区域 */
+.message-hint-container {
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.message-hint {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  animation: fadeIn 0.5s ease;
+  margin-bottom: 12px;
+}
+
+/* 消息列表样式 */
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 消息项样式 */
+.message-item {
+  border-radius: 8px;
+  border: 1px solid #eee;
+  padding: 12px;
+  transition: all 0.25s ease;
+  animation: fadeInDown 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.message-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.message-item-user {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+}
+
+.message-item-assistant {
+  background-color: #f5f5f5;
+  border-color: #e8e8e8;
+}
+
+.message-content {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* YOLO 模式下的消息样式 */
+.yolo-mode-container .message-item-user {
+  background-color: #ffe7e7;
+  border-color: #ffa39e;
+}
+
+.yolo-mode-container .message-item-assistant {
+  background-color: #fff2f0;
+  border-color: #ffccc7;
+}
