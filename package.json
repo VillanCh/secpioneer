@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@ant-design/x": "^1.0.5",
-    "@modelcontextprotocol/sdk": "^1.6.1",
     "@monaco-editor/react": "^4.7.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -44,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/eventsource": "^3.0.0"
   }
 }

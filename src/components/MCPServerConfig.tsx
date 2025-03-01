@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, List, Tag, Space, Button, Tooltip, Form, Input, Select, Divider, notification, Modal, Tabs, Collapse, Table, Row, Col, Empty, Badge } from 'antd';
+import { Typography, Card, List, Tag, Space, Button, Tooltip, Form, Input, Select, Divider, notification, Modal, Tabs, Collapse, Table, Row, Col, Empty, Badge, Alert } from 'antd';
 import { 
   ApiOutlined, 
   CloudServerOutlined, 
@@ -19,7 +19,8 @@ import {
   ExperimentOutlined
 } from '@ant-design/icons';
 import { Client as MCPClient } from "@modelcontextprotocol/sdk/client/index.js";
-
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { SSEDemo } from '../mcptransport';
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -62,36 +63,6 @@ interface MCPServer {
   lastConnected?: string;
   interfaceInfo?: MCPInterfaceInfo;
   clientConnected?: boolean;
-}
-
-// MCP 客户端配置类型
-interface MCPClientConfig {
-  name: string;
-  version: string;
-  transport: {
-    type: string;
-    url: string;
-  };
-}
-
-// 创建一个 mock 类代替实际的 SDK，因为导入存在问题
-class MCPClientMock {
-  private config: MCPClientConfig;
-  
-  constructor(config: MCPClientConfig) {
-    this.config = config;
-    console.log('MCP Client initialized with:', config);
-  }
-  
-  async connect(): Promise<void> {
-    console.log('Connecting to MCP server...');
-    return new Promise<void>(resolve => setTimeout(resolve, 500));
-  }
-  
-  async request(method: string, params: any): Promise<any[]> {
-    console.log(`MCP Request: ${method}`, params);
-    return [];
-  }
 }
 
 interface MCPServerConfigProps {
@@ -140,7 +111,7 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
   ]);
 
   // SDK 客户端实例
-  const [mcpClient, setMcpClient] = useState<MCPClientMock | null>(null);
+  const [mcpClient, setMcpClient] = useState<any>(null);
 
   // 表单状态
   const [form] = Form.useForm();
@@ -163,23 +134,10 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
     setConnecting(true);
     setCurrentServer(server);
     
+
+    let interfaceInfo: MCPInterfaceInfo;
+    
     try {
-      // 使用 MCP SDK 创建客户端并连接
-      const client = new MCPClientMock({
-        name: "SecPioneer MCP Client",
-        version: "1.0.0",
-        transport: {
-          type: server.type.toLowerCase(),
-          url: server.target
-        }
-      });
-      
-      await client.connect();
-      setMcpClient(client);
-      
-      // 获取服务器接口信息
-      let interfaceInfo: MCPInterfaceInfo;
-      
       try {
         // 调整API调用以匹配我们的Mock类
         const prompts: MCPPrompt[] = [];
@@ -188,51 +146,51 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
         
         // 尝试获取所有可用提示
         try {
-          const promptList = await client.request('listPrompts', {});
-          if (Array.isArray(promptList)) {
-            // 转换为 MCPPrompt 类型
-            promptList.forEach(p => prompts.push({
-              id: p.id || '',
-              name: p.name || '',
-              description: p.description || '',
-              parameters: p.parameters || []
-            }));
-          }
+          // const promptList = await client.request('listPrompts', {});
+          // if (Array.isArray(promptList)) {
+          //   // 转换为 MCPPrompt 类型
+          //   promptList.forEach(p => prompts.push({
+          //     id: p.id || '',
+          //     name: p.name || '',
+          //     description: p.description || '',
+          //     parameters: p.parameters || []
+          //   }));
+          // }
         } catch (e) {
           console.warn('Failed to get prompts:', e);
         }
         
         // 尝试获取所有可用资源
-        try {
-          const resourceList = await client.request('listResources', {});
-          if (Array.isArray(resourceList)) {
-            // 转换为 MCPResource 类型
-            resourceList.forEach(r => resources.push({
-              id: r.id || '',
-              path: r.path || '',
-              type: r.type || '',
-              size: r.size || 0
-            }));
-          }
-        } catch (e) {
-          console.warn('Failed to get resources:', e);
-        }
+        // try {
+        //   const resourceList = await client.request('listResources', {});
+        //   if (Array.isArray(resourceList)) {
+        //     // 转换为 MCPResource 类型
+        //     resourceList.forEach(r => resources.push({
+        //       id: r.id || '',
+        //       path: r.path || '',
+        //       type: r.type || '',
+        //       size: r.size || 0
+        //     }));
+        //   }
+        // } catch (e) {
+        //   console.warn('Failed to get resources:', e);
+        // }
         
         // 尝试获取所有可用工具
-        try {
-          const toolList = await client.request('listTools', {});
-          if (Array.isArray(toolList)) {
-            // 转换为 MCPTool 类型
-            toolList.forEach(t => tools.push({
-              name: t.name || '',
-              description: t.description || '',
-              arguments: t.arguments || {},
-              returnType: t.returnType || ''
-            }));
-          }
-        } catch (e) {
-          console.warn('Failed to get tools:', e);
-        }
+        // try {
+        //   const toolList = await client.request('listTools', {});
+        //   if (Array.isArray(toolList)) {
+        //     // 转换为 MCPTool 类型
+        //     toolList.forEach(t => tools.push({
+        //       name: t.name || '',
+        //       description: t.description || '',
+        //       arguments: t.arguments || {},
+        //       returnType: t.returnType || ''
+        //     }));
+        //   }
+        // } catch (e) {
+        //   console.warn('Failed to get tools:', e);
+        // }
         
         interfaceInfo = {
           prompts,
@@ -752,44 +710,46 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
         )}
       </Card>
       
-      {/* MCP 功能卡片 */}
-      <Card 
-        title={
-          <Space>
-            <ExperimentOutlined />
-            <span>MCP 功能</span>
-          </Space>
-        }
-        className="features-card"
-        style={{ marginTop: '16px' }}
-      >
-        <Row gutter={[16, 16]} className="features-grid">
-          {mcpFeatures.map((item, index) => (
-            <Col xs={24} sm={12} md={12} lg={6} xl={6} key={index}>
-              <Card 
-                bordered={false} 
-                className="feature-card"
-                hoverable
-              >
-                <div className="feature-icon-wrapper">
-                  <div className="feature-icon">{item.icon}</div>
-                </div>
-                <div className="feature-content">
-                  <Title level={5} className="feature-title">{item.title}</Title>
-                  <div className="feature-status">
-                    {item.status === 'active' ? 
-                      <Badge status="success" text="已启用" /> : 
-                      <Badge status="warning" text="待激活" />}
-                  </div>
-                  <Paragraph className="feature-description" ellipsis={{ rows: 2, expandable: true }}>
-                    {item.description}
+      {/* SSE 演示卡片 */}
+      <div className="sse-demo-section" style={{ marginTop: '20px' }}>
+        <Card 
+          title={
+            <Space>
+              <ApiOutlined />
+              <span>SSE 通信测试工具</span>
+            </Space>
+          }
+          extra={
+            <Tooltip title="通过该工具可以测试与 MCP 服务器的 SSE 连接">
+              <InfoCircleOutlined />
+            </Tooltip>
+          }
+          className="sse-demo-card"
+        >
+          <div className="sse-description">
+            <Alert
+              message="Server-Sent Events (SSE) 连接测试"
+              description={
+                <div>
+                  <Paragraph style={{ marginBottom: '8px' }}>
+                    SSE 是 MCP 的主要通信方式之一，使用该工具可以快速测试 MCP 服务器的 SSE 功能是否正常工作。
                   </Paragraph>
+                  <ul className="sse-features-list">
+                    <li>实时接收服务器推送的事件流</li>
+                    <li>支持 JSON 自动解析和格式化展示</li>
+                    <li>可添加多种自定义事件监听器</li>
+                    <li>支持按事件类型过滤消息</li>
+                  </ul>
                 </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Card>
+              }
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          </div>
+          <SSEDemo />
+        </Card>
+      </div>
       
       {/* MCP接口详情模态框 */}
       <Modal
@@ -962,6 +922,28 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
         .tool-card, .prompt-card {
           height: 100%;
           border-radius: 4px;
+        }
+        
+        /* SSE 演示区域样式 */
+        .sse-demo-section {
+          margin-bottom: 20px;
+        }
+        
+        .sse-demo-card .ant-card-body {
+          padding: 16px;
+        }
+        
+        .sse-features-list {
+          margin: 0;
+          padding-left: 18px;
+        }
+        
+        .sse-features-list li {
+          margin-bottom: 4px;
+        }
+        
+        .sse-description {
+          margin-bottom: 16px;
         }
         `}
       </style>
