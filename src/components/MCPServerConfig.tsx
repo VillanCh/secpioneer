@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, List, Tag, Space, Button, Tooltip, Form, Input, Select, Divider, notification, Modal, Tabs, Collapse, Table, Row, Col, Empty, Badge, Alert } from 'antd';
+import { Typography, Card, List, Tag, Space, Button, Tooltip, Form, Input, Select, Divider, notification, Modal, Tabs, Collapse, Table, Row, Col, Empty, Badge, Alert, message } from 'antd';
 import { 
   ApiOutlined, 
   CloudServerOutlined, 
@@ -18,8 +18,6 @@ import {
   InfoCircleOutlined,
   ExperimentOutlined
 } from '@ant-design/icons';
-import { Client as MCPClient } from "@modelcontextprotocol/sdk/client/index.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { SSEDemo } from '../mcptransport';
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
@@ -710,47 +708,6 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
         )}
       </Card>
       
-      {/* SSE 演示卡片 */}
-      <div className="sse-demo-section" style={{ marginTop: '20px' }}>
-        <Card 
-          title={
-            <Space>
-              <ApiOutlined />
-              <span>SSE 通信测试工具</span>
-            </Space>
-          }
-          extra={
-            <Tooltip title="通过该工具可以测试与 MCP 服务器的 SSE 连接">
-              <InfoCircleOutlined />
-            </Tooltip>
-          }
-          className="sse-demo-card"
-        >
-          <div className="sse-description">
-            <Alert
-              message="Server-Sent Events (SSE) 连接测试"
-              description={
-                <div>
-                  <Paragraph style={{ marginBottom: '8px' }}>
-                    SSE 是 MCP 的主要通信方式之一，使用该工具可以快速测试 MCP 服务器的 SSE 功能是否正常工作。
-                  </Paragraph>
-                  <ul className="sse-features-list">
-                    <li>实时接收服务器推送的事件流</li>
-                    <li>支持 JSON 自动解析和格式化展示</li>
-                    <li>可添加多种自定义事件监听器</li>
-                    <li>支持按事件类型过滤消息</li>
-                  </ul>
-                </div>
-              }
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-          </div>
-          <SSEDemo />
-        </Card>
-      </div>
-      
       {/* MCP接口详情模态框 */}
       <Modal
         title={
@@ -922,28 +879,6 @@ const MCPServerConfig: React.FC<MCPServerConfigProps> = () => {
         .tool-card, .prompt-card {
           height: 100%;
           border-radius: 4px;
-        }
-        
-        /* SSE 演示区域样式 */
-        .sse-demo-section {
-          margin-bottom: 20px;
-        }
-        
-        .sse-demo-card .ant-card-body {
-          padding: 16px;
-        }
-        
-        .sse-features-list {
-          margin: 0;
-          padding-left: 18px;
-        }
-        
-        .sse-features-list li {
-          margin-bottom: 4px;
-        }
-        
-        .sse-description {
-          margin-bottom: 16px;
         }
         `}
       </style>

@@ -37,7 +37,7 @@ const SSEDemo: React.FC = () => {
             <Input
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
-              placeholder="例如: http://localhost:11432"
+              placeholder="例如: http://localhost:11432/sse"
               allowClear
               addonBefore="SSE"
             />

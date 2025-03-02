@@ -3,14 +3,16 @@ import { Tabs } from 'antd';
 import { 
   ExperimentOutlined, 
   CloudServerOutlined, 
-  FolderOutlined 
+  FolderOutlined,
+  ApiOutlined
 } from '@ant-design/icons';
 import ThoughtPanel from './ThoughtPanel';
 import MCPServerConfig from './MCPServerConfig';
 import TaskFileSystem from './TaskFileSystem';
+import MCPTest from './MCPTest';
 
 // 标签页类型
-export type TabKey = 'thoughts' | 'mcpConfig' | 'fileSystem';
+export type TabKey = 'thoughts' | 'mcpConfig' | 'mcpTest' | 'fileSystem';
 
 // 本地存储的键名
 export const STORAGE_KEY = {
@@ -53,6 +55,16 @@ const LeftPanelTabs: React.FC<LeftPanelTabsProps> = ({
       children: <MCPServerConfig />
     },
     {
+      key: 'mcpTest',
+      label: (
+        <div className="tab-label">
+          <ApiOutlined className="tab-icon" />
+          <span className="tab-text">MCP测试</span>
+        </div>
+      ),
+      children: <div className="tab-content-container"><MCPTest /></div>
+    },
+    {
       key: 'fileSystem',
       label: (
         <div className="tab-label">
@@ -65,16 +77,24 @@ const LeftPanelTabs: React.FC<LeftPanelTabsProps> = ({
   ];
 
   return (
-    <Tabs
-      activeKey={activeTab}
-      onChange={onTabChange as (key: string) => void}
-      style={{ height: '100%' }}
-      items={tabItems}
-      tabPosition="left"
-      className="left-panel-tabs"
-      destroyInactiveTabPane={false}
-      size="small"
-    />
+    <>
+      <Tabs
+        activeKey={activeTab}
+        onChange={onTabChange as (key: string) => void}
+        style={{ height: '100%' }}
+        items={tabItems}
+        tabPosition="left"
+        className="left-panel-tabs"
+        destroyInactiveTabPane={false}
+        size="small"
+      />
+      <style>{`
+        .tab-content-container {
+          height: 100%;
+          overflow: hidden;
+        }
+      `}</style>
+    </>
   );
 };
 

@@ -1,256 +1,176 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Tooltip, Input, Alert, Spin, Empty } from 'antd';
-import { 
-  ApiOutlined, 
-  LinkOutlined, 
-  DisconnectOutlined, 
-  SendOutlined,
-  InfoCircleOutlined,
-  CheckCircleTwoTone,
-  ExclamationCircleTwoTone,
-  ClockCircleOutlined,
-  ReloadOutlined,
-  ClearOutlined
-} from '@ant-design/icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { Alert, Button, Card, Space, Typography, Badge, List, Tag, Divider } from 'antd';
+import { ApiOutlined, SyncOutlined, CloseCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
-// SSE 消息类型
-interface SSEMessage {
-  id: string;
-  event: string;
-  data: string;
-  timestamp: string;
-  parsed?: any;
-}
-
-// SSE 客户端属性
 interface SSEClientProps {
   serverUrl: string;
-  onMessage?: (message: SSEMessage) => void;
+  events?: string[];
   onConnect?: () => void;
   onDisconnect?: () => void;
-  onError?: (error: any) => void;
-  events?: string[]; // 可选的事件列表
-  autoConnect?: boolean;
+  onError?: (error: Event) => void;
+  onMessage?: (message: any) => void;
 }
 
-// SSE 连接状态
-type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-
 /**
- * SSE 客户端组件
- * 用于建立与服务器的 Server-Sent Events 连接
+ * SSE客户端组件
+ * 用于建立和管理与服务器的SSE连接，显示接收到的消息
  */
 const SSEClient: React.FC<SSEClientProps> = ({
   serverUrl,
-  onMessage,
+  events = ['message'],
   onConnect,
   onDisconnect,
   onError,
-  events = ['message'],
-  autoConnect = false
+  onMessage
 }) => {
-  // 状态管理
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
-  const [messages, setMessages] = useState<SSEMessage[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
-  const [customEvent, setCustomEvent] = useState<string>('');
-  const [filterEvent, setFilterEvent] = useState<string>('');
-  
-  // ref用于存储EventSource实例
+  const [connected, setConnected] = useState<boolean>(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Array<{
+    id: string;
+    event: string;
+    data: any;
+    time: Date;
+  }>>([]);
+  const [filteredEvent, setFilteredEvent] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
-  
-  // 消息列表底部的引用，用于自动滚动
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 连接到SSE服务器
-  const connect = useCallback(() => {
-    // 如果已经连接，先断开
-    if (eventSourceRef.current) {
-      disconnect();
-    }
-    
-    try {
-      setStatus('connecting');
-      setError(null);
-      
-      // 创建新的EventSource实例
-      const source = new EventSource(serverUrl);
-      eventSourceRef.current = source;
-      setEventSource(source);
-      
-      // 连接打开时的处理
-      source.onopen = () => {
-        setStatus('connected');
-        if (onConnect) onConnect();
-      };
-      
-      // 出错时的处理
-      source.onerror = (err: Event) => {
-        setStatus('error');
-        const errorMessage = `连接错误: ${err}`;
-        setError(errorMessage);
-        if (onError) onError(err);
-      };
-      
-      // 默认消息处理
-      source.onmessage = (event: MessageEvent) => {
-        const newMessage: SSEMessage = {
-          id: event.lastEventId || `msg-${Date.now()}`,
-          event: 'message',
-          data: event.data,
-          timestamp: new Date().toISOString(),
+  useEffect(() => {
+    // 连接到SSE服务器
+    const connectToSSE = () => {
+      try {
+        setConnectionError(null);
+        
+        // 创建EventSource
+        const eventSource = new EventSource(serverUrl);
+        eventSourceRef.current = eventSource;
+        
+        // 连接建立事件
+        eventSource.onopen = () => {
+          setConnected(true);
+          onConnect?.();
         };
         
-        // 尝试解析JSON数据
-        try {
-          newMessage.parsed = JSON.parse(event.data);
-        } catch (e) {
-          // 如果不是JSON格式，保持原样
-        }
-        
-        // 更新消息列表
-        setMessages(prev => [...prev, newMessage]);
-        if (onMessage) onMessage(newMessage);
-      };
-      
-      // 注册自定义事件监听器
-      events.forEach(eventName => {
-        if (eventName === 'message') return; // 默认事件已处理
-        
-        source.addEventListener(eventName, (event: any) => {
-          const newMessage: SSEMessage = {
-            id: event.lastEventId || `${eventName}-${Date.now()}`,
-            event: eventName,
-            data: event.data,
-            timestamp: new Date().toISOString(),
-          };
-          
-          // 尝试解析JSON数据
+        // 默认消息事件
+        eventSource.onmessage = (event) => {
           try {
-            newMessage.parsed = JSON.parse(event.data);
-          } catch (e) {
-            // 如果不是JSON格式，保持原样
+            const data = JSON.parse(event.data);
+            const newMessage = {
+              id: Math.random().toString(36).substring(2, 9),
+              event: 'message',
+              data,
+              time: new Date()
+            };
+            
+            setMessages(prev => [...prev, newMessage]);
+            onMessage?.(data);
+          } catch (err) {
+            // 如果不是JSON，直接显示字符串
+            const newMessage = {
+              id: Math.random().toString(36).substring(2, 9),
+              event: 'message',
+              data: event.data,
+              time: new Date()
+            };
+            setMessages(prev => [...prev, newMessage]);
+            onMessage?.(event.data);
           }
-          
-          // 更新消息列表
-          setMessages(prev => [...prev, newMessage]);
-          if (onMessage) onMessage(newMessage);
+        };
+        
+        // 错误处理
+        eventSource.onerror = (err) => {
+          setConnectionError('连接错误：服务器可能不支持SSE或连接被拒绝');
+          setConnected(false);
+          onError?.(err);
+        };
+        
+        // 注册自定义事件
+        events.forEach(eventType => {
+          if (eventType !== 'message') {
+            eventSource.addEventListener(eventType, (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                const newMessage = {
+                  id: Math.random().toString(36).substring(2, 9),
+                  event: eventType,
+                  data,
+                  time: new Date()
+                };
+                setMessages(prev => [...prev, newMessage]);
+                onMessage?.(data);
+              } catch (err) {
+                const newMessage = {
+                  id: Math.random().toString(36).substring(2, 9),
+                  event: eventType,
+                  data: event.data,
+                  time: new Date()
+                };
+                setMessages(prev => [...prev, newMessage]);
+                onMessage?.(event.data);
+              }
+            });
+          }
         });
-      });
-      
-    } catch (err) {
-      setStatus('error');
-      const errorMessage = `创建连接失败: ${err}`;
-      setError(errorMessage);
-      if (onError) onError(err);
-    }
-  }, [serverUrl, events, onConnect, onError, onMessage]);
+      } catch (err) {
+        setConnectionError(`初始化连接错误: ${err}`);
+        setConnected(false);
+      }
+    };
+    
+    connectToSSE();
+    
+    // 在组件卸载时，关闭SSE连接
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+        setConnected(false);
+        onDisconnect?.();
+      }
+    };
+  }, [serverUrl, events, onConnect, onDisconnect, onError, onMessage]);
   
   // 断开SSE连接
-  const disconnect = useCallback(() => {
+  const disconnect = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
-      setEventSource(null);
-      setStatus('disconnected');
-      if (onDisconnect) onDisconnect();
+      setConnected(false);
+      onDisconnect?.();
     }
-  }, [onDisconnect]);
-  
-  // 监听自定义事件
-  const addCustomEventListener = useCallback(() => {
-    if (!customEvent.trim() || !eventSourceRef.current || status !== 'connected') {
-      return;
-    }
-    
-    const eventName = customEvent.trim();
-    
-    // 如果已存在该事件监听器，先返回
-    if (events.includes(eventName)) {
-      return;
-    }
-    
-    // 添加自定义事件监听器
-    eventSourceRef.current.addEventListener(eventName, (event: any) => {
-      const newMessage: SSEMessage = {
-        id: event.lastEventId || `${eventName}-${Date.now()}`,
-        event: eventName,
-        data: event.data,
-        timestamp: new Date().toISOString(),
-      };
-      
-      // 尝试解析JSON数据
-      try {
-        newMessage.parsed = JSON.parse(event.data);
-      } catch (e) {
-        // 如果不是JSON格式，保持原样
-      }
-      
-      // 更新消息列表
-      setMessages(prev => [...prev, newMessage]);
-      if (onMessage) onMessage(newMessage);
-    });
-    
-    // 更新事件列表
-    events.push(eventName);
-    
-    // 清空输入框
-    setCustomEvent('');
-  }, [customEvent, events, status, onMessage]);
-  
-  // 清空消息列表
-  const clearMessages = () => {
-    setMessages([]);
   };
   
-  // 自动滚动到底部
+  // 在新消息添加后，滚动到底部
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
   
-  // 自动连接（如果启用）
-  useEffect(() => {
-    if (autoConnect) {
-      connect();
-    }
-    
-    // 组件卸载时断开连接
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, [autoConnect, connect]);
+  // 计算事件类型及其消息数量
+  const eventCounts = events.reduce((acc, event) => {
+    acc[event] = messages.filter(msg => msg.event === event).length;
+    return acc;
+  }, {} as Record<string, number>);
   
-  // 格式化时间
-  const formatTime = (isoString: string) => {
-    const date = new Date(isoString);
+  // 格式化消息显示
+  const formatMessage = (data: any): string => {
+    if (typeof data === 'object') {
+      return JSON.stringify(data, null, 2);
+    }
+    return String(data);
+  };
+  
+  // 格式化时间显示
+  const formatTime = (date: Date): string => {
     return date.toLocaleTimeString();
   };
   
-  // 获取连接状态标签
-  const getStatusTag = () => {
-    switch (status) {
-      case 'connected':
-        return <Tag icon={<CheckCircleTwoTone twoToneColor="#52c41a" />} color="success">已连接</Tag>;
-      case 'connecting':
-        return <Tag icon={<ClockCircleOutlined />} color="processing">连接中</Tag>;
-      case 'error':
-        return <Tag icon={<ExclamationCircleTwoTone twoToneColor="#f5222d" />} color="error">连接错误</Tag>;
-      case 'disconnected':
-      default:
-        return <Tag icon={<DisconnectOutlined />} color="default">已断开</Tag>;
-    }
-  };
-  
-  // 筛选消息
-  const filteredMessages = filterEvent 
-    ? messages.filter(msg => msg.event.includes(filterEvent))
+  // 过滤消息
+  const filteredMessages = filteredEvent 
+    ? messages.filter(msg => msg.event === filteredEvent) 
     : messages;
   
   return (
@@ -260,231 +180,149 @@ const SSEClient: React.FC<SSEClientProps> = ({
           <Space>
             <ApiOutlined />
             <span>SSE 客户端</span>
-            {getStatusTag()}
+            <Badge 
+              status={connected ? "success" : "error"} 
+              text={connected ? "已连接" : "未连接"} 
+            />
           </Space>
         }
         extra={
-          <Space>
-            {status === 'disconnected' || status === 'error' ? (
-              <Tooltip title="连接到服务器">
-                <Button 
-                  type="primary" 
-                  icon={<LinkOutlined />} 
-                  onClick={connect}
-                >
-                  连接
-                </Button>
-              </Tooltip>
-            ) : (
-              <Tooltip title="断开连接">
-                <Button 
-                  danger 
-                  icon={<DisconnectOutlined />} 
-                  onClick={disconnect}
-                >
-                  断开
-                </Button>
-              </Tooltip>
-            )}
-            <Tooltip title="清空消息">
-              <Button 
-                icon={<ClearOutlined />} 
-                onClick={clearMessages}
-              >
-                清空
-              </Button>
-            </Tooltip>
-          </Space>
+          <Button
+            type="primary"
+            danger
+            icon={<CloseCircleOutlined />}
+            onClick={disconnect}
+            disabled={!connected}
+          >
+            断开连接
+          </Button>
         }
       >
-        <div className="server-info">
-          <Paragraph>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <div className="connection-info">
             <Text strong>服务器地址: </Text>
             <Text code>{serverUrl}</Text>
-          </Paragraph>
+          </div>
           
-          <Paragraph>
-            <Text strong>监听事件: </Text>
+          {connectionError && (
+            <Alert
+              message="连接错误"
+              description={connectionError}
+              type="error"
+              showIcon
+            />
+          )}
+          
+          <div className="event-filter">
             <Space wrap>
+              <Text strong>事件过滤: </Text>
+              <Tag 
+                color={filteredEvent === null ? "blue" : "default"} 
+                style={{ cursor: 'pointer' }}
+                onClick={() => setFilteredEvent(null)}
+              >
+                全部 ({messages.length})
+              </Tag>
               {events.map(event => (
-                <Tag key={event} color="blue">{event}</Tag>
+                <Tag 
+                  key={event}
+                  color={filteredEvent === event ? "blue" : "default"}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setFilteredEvent(event)}
+                >
+                  {event} ({eventCounts[event] || 0})
+                </Tag>
               ))}
             </Space>
-          </Paragraph>
-        </div>
-        
-        {error && (
-          <Alert 
-            message="连接错误" 
-            description={error} 
-            type="error" 
-            showIcon 
-            closable 
-            style={{ marginBottom: 16 }}
-          />
-        )}
-        
-        <div className="actions">
-          <Space style={{ marginBottom: 16 }}>
-            <Input 
-              placeholder="添加自定义事件监听器" 
-              value={customEvent} 
-              onChange={e => setCustomEvent(e.target.value)}
-              onPressEnter={addCustomEventListener}
-              disabled={status !== 'connected'}
-              prefix={<InfoCircleOutlined />}
-            />
-            <Button 
-              type="primary"
-              icon={<SendOutlined />} 
-              onClick={addCustomEventListener}
-              disabled={status !== 'connected'}
-            >
-              添加
-            </Button>
-          </Space>
+          </div>
           
-          <Input 
-            placeholder="筛选事件类型" 
-            value={filterEvent} 
-            onChange={e => setFilterEvent(e.target.value)}
-            style={{ marginBottom: 16 }}
-            allowClear
-          />
-        </div>
-        
-        <div className="message-list">
-          <Card
-            className="messages-card"
-            size="small"
-            title={
-              <Space>
-                <span>接收的消息</span>
-                <Tag color="blue">{filteredMessages.length} 条</Tag>
-              </Space>
-            }
-            extra={
-              <Button 
-                icon={<ReloadOutlined />} 
-                size="small" 
-                onClick={clearMessages}
-              >
-                清空
-              </Button>
-            }
-          >
-            {status === 'connecting' ? (
-              <div className="message-loading">
-                <Spin tip="正在连接服务器..." />
+          <Divider style={{ margin: '8px 0' }} />
+          
+          <div className="message-list">
+            {filteredMessages.length === 0 ? (
+              <div className="empty-messages">
+                <Text type="secondary">
+                  {connected ? '等待接收消息...' : '未连接，无法接收消息'}
+                </Text>
               </div>
-            ) : filteredMessages.length === 0 ? (
-              <Empty description="暂无消息" />
             ) : (
               <List
-                className="messages"
-                itemLayout="vertical"
+                size="small"
                 dataSource={filteredMessages}
-                renderItem={msg => (
-                  <List.Item key={msg.id} className="message-item">
-                    <div className="message-header">
-                      <Space size="small">
-                        <Tag color={msg.event === 'message' ? 'green' : 'purple'}>
-                          {msg.event}
-                        </Tag>
-                        <Text type="secondary">{formatTime(msg.timestamp)}</Text>
-                        <Text code className="message-id">ID: {msg.id}</Text>
-                      </Space>
-                    </div>
-                    <div className="message-content">
-                      {msg.parsed ? (
-                        <div className="message-json">
-                          <pre>{JSON.stringify(msg.parsed, null, 2)}</pre>
-                        </div>
-                      ) : (
-                        <div className="message-text">
-                          {msg.data}
-                        </div>
-                      )}
+                renderItem={message => (
+                  <List.Item className="message-item">
+                    <div style={{ width: '100%' }}>
+                      <div className="message-header">
+                        <Space>
+                          <Tag color="blue">{message.event}</Tag>
+                          <Text type="secondary">{formatTime(message.time)}</Text>
+                        </Space>
+                      </div>
+                      <div className="message-content">
+                        <pre>{formatMessage(message.data)}</pre>
+                      </div>
                     </div>
                   </List.Item>
                 )}
               />
             )}
             <div ref={messagesEndRef} />
-          </Card>
-        </div>
+          </div>
+        </Space>
       </Card>
       
       <style>{`
         .sse-client {
-          margin: 0 auto;
-          max-width: 100%;
+          width: 100%;
         }
         
-        .server-info {
-          margin-bottom: 16px;
-          padding-bottom: 16px;
-          border-bottom: 1px dashed #f0f0f0;
-        }
-        
-        .message-list {
-          border-radius: 4px;
-          overflow: hidden;
-        }
-        
-        .messages-card {
-          height: 100%;
-        }
-        
-        .messages {
-          max-height: 400px;
-          overflow-y: auto;
-          padding: 0 8px;
-        }
-        
-        .message-item {
-          border-bottom: 1px solid #f0f0f0;
-          padding: 12px 8px;
-        }
-        
-        .message-item:last-child {
-          border-bottom: none;
-        }
-        
-        .message-header {
+        .connection-info {
           margin-bottom: 8px;
         }
         
-        .message-id {
-          font-size: 12px;
+        .event-filter {
+          margin: 8px 0;
+        }
+        
+        .message-list {
+          height: 300px;
+          overflow-y: auto;
+          border: 1px solid #eee;
+          border-radius: 4px;
+          padding: 8px;
+          background: #fafafa;
+        }
+        
+        .message-item {
+          margin-bottom: 8px;
+          background: white;
+          border-radius: 4px;
+          border-left: 3px solid #1890ff;
+          overflow: hidden;
+        }
+        
+        .message-header {
+          padding: 4px 8px;
+          background: #f0f7ff;
+          border-bottom: 1px solid #e6f7ff;
         }
         
         .message-content {
-          margin-top: 8px;
-        }
-        
-        .message-json {
-          background: #f9f9f9;
-          border-radius: 4px;
           padding: 8px;
           overflow-x: auto;
         }
         
-        .message-json pre {
+        .message-content pre {
           margin: 0;
-          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-          font-size: 12px;
-        }
-        
-        .message-text {
-          padding: 8px;
-          word-break: break-word;
           white-space: pre-wrap;
+          word-break: break-all;
         }
         
-        .message-loading {
-          padding: 40px 0;
-          text-align: center;
+        .empty-messages {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100px;
         }
       `}</style>
     </div>
